@@ -8,4 +8,4 @@ Welcome to the GitHub repository for Astro. An advanced Discord suggestion bot t
 
 ## Join The Following Server For Support or [**Invite Astro**]()
 
-[![Discord Invite Widget](https://inv.wtf/widget/polar)](https://inv.wtf/polar)
+[![Discord Invite Widget](https://inv.wtf/widget/astro)](https://inv.wtf/astro)
