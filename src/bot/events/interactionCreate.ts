@@ -4,7 +4,21 @@ import EventHandler from "../../../lib/classes/EventHandler.js";
 export default class InteractionCreate extends EventHandler {
     override async run(interaction: Interaction) {
         this.client.logger.info(
-            `${interaction.type} interaction created: ${interaction.toString()}`
+            `${interaction.type} interaction created by ${
+                interaction.user.tag
+            } [${interaction.user.id}]${
+                interaction.guild
+                    ? ` in ${interaction.guild.name} [${interaction.guild.id}]`
+                    : ""
+            }${
+                interaction.isCommand()
+                    ? `: ${interaction.toString()}`
+                    : `${
+                          interaction.isMessageComponent()
+                              ? ` with a custom ID of: ${interaction.customId}`
+                              : ""
+                      }`
+            }`
         );
         // @ts-ignore
         if (this.client.mongo.topology.s.state !== "connected")
@@ -45,3 +59,4 @@ export default class InteractionCreate extends EventHandler {
         );
     }
 }
+
