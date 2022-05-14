@@ -10,3 +10,4 @@ export default class MessageCreate extends EventHandler {
             this.client.textCommandHandler.handleCommand(message);
     }
 }
+

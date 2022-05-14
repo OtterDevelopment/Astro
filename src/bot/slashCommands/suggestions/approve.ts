@@ -41,8 +41,6 @@ export default class ApproveSuggestion extends SlashCommand {
             .collection("permissions")
             .findOne({ guildId: interaction.guild!.id });
 
-        if (interaction.memberPermissions?.has("MANAGE_GUILD")) return [true];
-
         if (!permissionDocument)
             return [
                 false,
@@ -52,26 +50,27 @@ export default class ApproveSuggestion extends SlashCommand {
                         "You don't have enough permissions to change the outcome of this suggestion!"
                 }
             ];
-
-        if (permissionDocument?.users.includes(interaction.user.id))
+        else if (interaction.memberPermissions?.has("MANAGE_GUILD"))
+            return [true];
+        else if (
+            permissionDocument?.allowed.users.includes(interaction.user.id) &&
+            !permissionDocument?.denied.users.includes(interaction.user.id)
+        )
             return [true];
 
-        let member: GuildMember;
+        let { member } = interaction;
 
-        if (!(interaction.member instanceof GuildMember)) {
+        if (!(interaction.member instanceof GuildMember))
             member = await interaction.guild!.members.fetch(
                 interaction.user.id
             );
 
-            if (
-                member.roles.cache.some(role =>
-                    permissionDocument?.roles.includes(role.id)
-                )
-            )
-                return [true];
-        } else if (
-            interaction.member.roles.cache.some(role =>
-                permissionDocument?.roles.includes(role.id)
+        if (
+            (member as GuildMember).roles.cache.some(role =>
+                permissionDocument?.allowed.roles.includes(role.id)
+            ) &&
+            (member as GuildMember).roles.cache.every(
+                role => !permissionDocument?.denied.roles.includes(role.id)
             )
         )
             return [true];
