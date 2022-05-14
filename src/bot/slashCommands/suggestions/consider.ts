@@ -41,7 +41,10 @@ export default class ConsiderSuggestion extends SlashCommand {
             .collection("permissions")
             .findOne({ guildId: interaction.guild!.id });
 
-        if (!permissionDocument)
+        if (
+            !permissionDocument &&
+            !interaction.memberPermissions?.has("MANAGE_GUILD")
+        )
             return [
                 false,
                 {
