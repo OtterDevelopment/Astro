@@ -100,7 +100,7 @@ export default class DenySuggestion extends SlashCommand {
             return interaction.reply(
                 this.client.functions.generateErrorMessage({
                     title: "Suggestion Not Found",
-                    description: "The suggestion you provided doesn't exist!`"
+                    description: "The suggestion you provided doesn't exist!"
                 })
             );
 
@@ -264,65 +264,84 @@ export default class DenySuggestion extends SlashCommand {
                 .findOne({ guildId: interaction.guild!.id })
                 .then(entry => {
                     if (entry) return;
-                    this.client.users.fetch(suggestion.suggesterId).then(user =>
-                        user
-                            .send(
-                                this.client.functions.generateErrorMessage(
-                                    {
-                                        author: suggestionMessage.embeds[0]
-                                            .author!,
-                                        title: `Suggestion #${suggestion.suggestionNumber} Denied`,
-                                        url: suggestionMessage.url,
-                                        description:
-                                            suggestionMessage.embeds[0]
-                                                .description!,
-                                        fields: [
-                                            {
-                                                name: `Reason from ${
-                                                    interaction.user.tag
-                                                } at ${this.client.functions.generateTimestamp(
-                                                    { type: "f" }
-                                                )}`,
-                                                value:
-                                                    interaction.options.getString(
-                                                        "reason"
-                                                    ) || "No reason provided."
-                                            }
-                                        ]
-                                    },
-                                    false,
-                                    [
-                                        new MessageActionRow({
-                                            components: [
-                                                new MessageButton({
-                                                    label: "Disable DMs",
-                                                    customId: "toggleDMs",
-                                                    style: "DANGER"
-                                                })
-                                            ]
-                                        })
-                                    ]
-                                )
-                            )
-                            .catch(error => {
-                                if (error.code === 50007)
-                                    return this.client.logger.info(
-                                        `I tried to DM ${user.tag} [${
-                                            user.id
-                                        }] because the outcome of their suggestion (${
-                                            suggestion.suggestionNumber
-                                        }) in ${interaction.guild!.name} [${
-                                            interaction.guild!.id
-                                        }] has changed but they're DMs are closed!`
-                                    );
 
-                                this.client.logger.error(error);
-                                this.client.logger.sentry.captureWithInteraction(
-                                    error,
-                                    interaction
+                    this.client.mongo
+                        .db("users")
+                        .collection("dmsDisabled")
+                        .findOne({ userId: suggestion.suggesterId })
+                        .then(dmsDisabled => {
+                            if (dmsDisabled) return;
+
+                            this.client.users
+                                .fetch(suggestion.suggesterId)
+                                .then(user =>
+                                    user
+                                        .send(
+                                            this.client.functions.generateErrorMessage(
+                                                {
+                                                    author: suggestionMessage
+                                                        .embeds[0].author!,
+                                                    title: `Suggestion #${suggestion.suggestionNumber} Denied`,
+                                                    url: suggestionMessage.url,
+                                                    description:
+                                                        suggestionMessage
+                                                            .embeds[0]
+                                                            .description!,
+                                                    fields: [
+                                                        {
+                                                            name: `Reason from ${
+                                                                interaction.user
+                                                                    .tag
+                                                            } at ${this.client.functions.generateTimestamp(
+                                                                { type: "f" }
+                                                            )}`,
+                                                            value:
+                                                                interaction.options.getString(
+                                                                    "reason"
+                                                                ) ||
+                                                                "No reason provided."
+                                                        }
+                                                    ]
+                                                },
+                                                false,
+                                                [
+                                                    new MessageActionRow({
+                                                        components: [
+                                                            new MessageButton({
+                                                                label: "Disable DMs",
+                                                                customId:
+                                                                    "toggleDMs",
+                                                                style: "DANGER"
+                                                            })
+                                                        ]
+                                                    })
+                                                ]
+                                            )
+                                        )
+                                        .catch(error => {
+                                            if (error.code === 50007)
+                                                return this.client.logger.info(
+                                                    `I tried to DM ${
+                                                        user.tag
+                                                    } [${
+                                                        user.id
+                                                    }] because the outcome of their suggestion (${
+                                                        suggestion.suggestionNumber
+                                                    }) in ${
+                                                        interaction.guild!.name
+                                                    } [${
+                                                        interaction.guild!.id
+                                                    }] has changed but they're DMs are closed!`
+                                                );
+
+                                            this.client.logger.error(error);
+                                            this.client.logger.sentry.captureWithInteraction(
+                                                error,
+                                                interaction
+                                            );
+                                        })
                                 );
-                            })
-                    );
+                        });
                 }),
             this.client.mongo
                 .db("guilds")
