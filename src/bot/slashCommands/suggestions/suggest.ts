@@ -160,23 +160,7 @@ export default class Suggest extends SlashCommand {
                             ]
                         })
                     ]
-                ),
-                files: !dontAttachImages
-                    ? [
-                          new MessageAttachment(
-                              interaction.user.displayAvatarURL({
-                                  dynamic: true
-                              }),
-                              `userAvatar.${
-                                  interaction.user
-                                      .displayAvatarURL({ dynamic: true })
-                                      .endsWith(".gif")
-                                      ? "gif"
-                                      : "png"
-                              }`
-                          )
-                      ]
-                    : []
+                )
             });
         } catch (error: any) {
             if (error.code === 50013) {
