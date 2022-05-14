@@ -214,6 +214,12 @@ export default class Config extends SlashCommand {
                     description:
                         "Toggle whether or not all users who voted on the suggestion should be DMed or not.",
                     type: "SUB_COMMAND"
+                },
+                {
+                    name: "attach_images",
+                    description:
+                        "Toggle whether or not images should be attached to suggestions to allow images to be viewed longer.",
+                    type: "SUB_COMMAND"
                 }
             ]
         });
@@ -337,11 +343,13 @@ export default class Config extends SlashCommand {
                             { guildId: interaction.guild!.id },
                             {
                                 $addToSet: {
-                                    [interaction.options.getMentionable(
-                                        "object"
-                                    ) instanceof Role
-                                        ? "roles"
-                                        : "users"]: interaction.user.id
+                                    [`allowed.${
+                                        interaction.options.getMentionable(
+                                            "object"
+                                        ) instanceof Role
+                                            ? "roles"
+                                            : "users"
+                                    }`]: interaction.user.id
                                 }
                             },
                             { upsert: true }
@@ -371,11 +379,13 @@ export default class Config extends SlashCommand {
                         { guildId: interaction.guild!.id },
                         {
                             $pull: {
-                                [interaction.options.getMentionable(
-                                    "object"
-                                ) instanceof Role
-                                    ? "roles"
-                                    : "users"]: interaction.user.id
+                                [`denied.${
+                                    interaction.options.getMentionable(
+                                        "object"
+                                    ) instanceof Role
+                                        ? "roles"
+                                        : "users"
+                                }`]: interaction.user.id
                             }
                         },
                         { upsert: true }
@@ -579,6 +589,32 @@ export default class Config extends SlashCommand {
                         title: "DMing Participants Toggled",
                         description:
                             "I have toggled DMing all users who vote on suggestions when a choice is made!"
+                    })
+                )
+            ]);
+        } else if (interaction.options.getSubcommand() === "") {
+            return Promise.all([
+                this.client.mongo
+                    .db("guilds")
+                    .collection("dontAttachImages")
+                    .findOne({ guildId: interaction.guild!.id })
+                    .then((entry): any => {
+                        if (!entry)
+                            return this.client.mongo
+                                .db("guilds")
+                                .collection("dontAttachImages")
+                                .insertOne({ guildId: interaction.guild!.id });
+
+                        return this.client.mongo
+                            .db("guilds")
+                            .collection("dontAttachImages")
+                            .deleteOne({ guildId: interaction.guild!.id });
+                    }),
+                interaction.reply(
+                    this.client.functions.generateSuccessMessage({
+                        title: "Attaching Images Toggled",
+                        description:
+                            "I have toggled attaching images when a suggestion is created!"
                     })
                 )
             ]);

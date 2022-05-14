@@ -61,10 +61,10 @@ export default class Suggest extends SlashCommand {
 
         const [
             suggestionNumber,
-            attachImages,
+            dontAttachImages,
             autoThread,
             customEmojis,
-            anonymousSuggestionEnabled
+            anonymousSuggestionsEnabled
         ] = await Promise.all([
             this.client.mongo
                 .db("suggestions")
@@ -72,7 +72,7 @@ export default class Suggest extends SlashCommand {
                 .countDocuments({}),
             this.client.mongo
                 .db("guilds")
-                .collection("attachImages")
+                .collection("dontAttachImages")
                 .findOne({ guildId: interaction.guild!.id }),
             this.client.mongo
                 .db("guilds")
@@ -94,7 +94,7 @@ export default class Suggest extends SlashCommand {
             suggestionMessage = await suggestionChannel.send({
                 ...this.client.functions.generatePrimaryMessage(
                     {
-                        author: anonymousSuggestionEnabled
+                        author: anonymousSuggestionsEnabled
                             ? {
                                   name: "Anonymous",
                                   iconURL:
@@ -102,7 +102,7 @@ export default class Suggest extends SlashCommand {
                               }
                             : {
                                   name: interaction.user.tag,
-                                  iconURL: attachImages
+                                  iconURL: !dontAttachImages
                                       ? `userAvatar.${
                                             interaction.user
                                                 .displayAvatarURL({
@@ -143,7 +143,7 @@ export default class Suggest extends SlashCommand {
                         })
                     ]
                 ),
-                attachments: attachImages
+                attachments: !dontAttachImages
                     ? [
                           new MessageAttachment(
                               interaction.user.displayAvatarURL({
