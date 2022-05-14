@@ -1,10 +1,15 @@
-import { Intents, PermissionString, PresenceData } from "discord.js";
+import {
+    Intents,
+    PartialTypes,
+    PermissionString,
+    PresenceData
+} from "discord.js";
 
 export default {
     prefixes: process.env.NODE_ENV === "production" ? ["a!"] : ["a!!"],
     botName: "Astro",
 
-    version: "1.0.0",
+    version: "3.0.0",
     admins: ["619284841187246090", "255422791875166208"],
 
     // If your bot isn't public, or open source, or doesn't have a
@@ -42,6 +47,9 @@ export default {
         Intents.FLAGS.DIRECT_MESSAGES,
         Intents.FLAGS.GUILD_EMOJIS_AND_STICKERS
     ],
+
+    // If you want to receive direct messages you need the channel partial.
+    partials: ["CHANNEL"] as PartialTypes[],
 
     // If your bot requires any permissions other than the ones below
     // Add them and all commands and interactions will only work if
