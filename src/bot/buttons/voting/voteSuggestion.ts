@@ -70,7 +70,7 @@ export default class VoteSuggestion extends Button {
                                 label:
                                     suggestion.votes.down?.length.toString() ||
                                     "0",
-                                emoji: customEmojis?.downvote || "👍",
+                                emoji: customEmojis?.downvote || "👎",
                                 style: "DANGER",
                                 customId: `voteSuggestion-${
                                     interaction.guild!.id
