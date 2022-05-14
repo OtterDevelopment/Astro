@@ -7,6 +7,7 @@ const client = new BetterClient({
     restGlobalRateLimit: 50,
     invalidRequestWarningInterval: 500,
     presence: Config.presence,
+    partials: Config.partials,
     intents: Config.intents
 });
 
@@ -14,3 +15,4 @@ client.login().catch(error => {
     client.logger.error(error);
     client.logger.sentry.captureException(error);
 });
+
