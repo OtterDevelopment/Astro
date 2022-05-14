@@ -391,7 +391,7 @@ export default class Config extends SlashCommand {
                         .updateOne(
                             { guildId: interaction.guild!.id },
                             {
-                                $pull: {
+                                $addToSet: {
                                     [`denied.${
                                         interaction.options.getMentionable(
                                             "object"
@@ -433,6 +433,13 @@ export default class Config extends SlashCommand {
                                     ) instanceof Role
                                         ? "roles"
                                         : "users"
+                                }`]: interaction.user.id,
+                                [`allowed.${
+                                    interaction.options.getMentionable(
+                                        "object"
+                                    ) instanceof Role
+                                        ? "roles"
+                                        : "users"
                                 }`]: interaction.user.id
                             }
                         },
@@ -446,10 +453,10 @@ export default class Config extends SlashCommand {
                             ) instanceof Role
                                 ? "Role"
                                 : "User"
-                        } Denied`,
-                        description: `I have denied ${interaction.options
+                        } Cleared`,
+                        description: `I have cleared ${interaction.options
                             .getMentionable("object")!
-                            .toString()} the permission to change the outcome of suggestions!`
+                            .toString()}'s permissions!`
                     })
                 )
             ]);
