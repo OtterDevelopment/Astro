@@ -103,15 +103,33 @@ export default class Suggest extends SlashCommand {
                             : {
                                   name: interaction.user.tag,
                                   iconURL: !dontAttachImages
-                                      ? `attachment://userAvatar.${
-                                            interaction.user
-                                                .displayAvatarURL({
-                                                    dynamic: true
-                                                })
-                                                .endsWith(".gif")
-                                                ? "gif"
-                                                : "png"
-                                        }`
+                                      ? (
+                                            await this.client.functions.uploadToMediaChannel(
+                                                [
+                                                    new MessageAttachment(
+                                                        interaction.user.displayAvatarURL(
+                                                            {
+                                                                dynamic: true
+                                                            }
+                                                        ),
+                                                        `userAvatar.${
+                                                            interaction.user
+                                                                .displayAvatarURL(
+                                                                    {
+                                                                        dynamic:
+                                                                            true
+                                                                    }
+                                                                )
+                                                                .endsWith(
+                                                                    ".gif"
+                                                                )
+                                                                ? "gif"
+                                                                : "png"
+                                                        }`
+                                                    )
+                                                ]
+                                            )
+                                        ).first()!.url
                                       : interaction.user.displayAvatarURL({
                                             dynamic: true
                                         })

@@ -64,6 +64,8 @@ export default {
     dataDog: {
         apiKey: process.env.DATADOG_API_KEY,
         baseURL: "https://app.datadoghq.com/api/v1/"
-    }
+    },
+
+    mediaChannel: "961374122594684958"
 };
 

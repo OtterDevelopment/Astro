@@ -2,11 +2,13 @@ import { createHash } from "crypto";
 import * as petitio from "petitio";
 import {
     MessageActionRow,
+    MessageAttachment,
     MessageButton,
     MessageEmbed,
     MessageEmbedOptions,
     PermissionString,
     Snowflake,
+    TextChannel,
     User
 } from "discord.js";
 import { existsSync, mkdirSync, readdirSync } from "fs";
@@ -20,6 +22,11 @@ export default class Functions {
      * Our Client.
      */
     private client: BetterClient;
+
+    /**
+     * Our media channel.
+     */
+    private mediaChannel?: TextChannel;
 
     /**
      * Create our functions.
@@ -320,6 +327,21 @@ export default class Functions {
      */
     public isFunction(input: any): boolean {
         return typeof input === "function";
+    }
+
+    /**
+     * Upload attachment(s) to the media channel.
+     * @param attachment The attachments to send to the media channel.
+     * @returns The uploaded attachments.
+     */
+    public async uploadToMediaChannel(attachments: MessageAttachment[]) {
+        if (!this.mediaChannel)
+            this.mediaChannel = this.client.channels.cache.get(
+                this.client.config.mediaChannel
+            ) as TextChannel;
+
+        return (await this.mediaChannel.send({ files: attachments }))
+            .attachments;
     }
 }
 
