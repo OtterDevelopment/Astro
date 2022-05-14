@@ -143,7 +143,7 @@ export default class Suggest extends SlashCommand {
                         })
                     ]
                 ),
-                attachments: !dontAttachImages
+                files: !dontAttachImages
                     ? [
                           new MessageAttachment(
                               interaction.user.displayAvatarURL({
