@@ -28,6 +28,12 @@ export default class ApproveSuggestion extends SlashCommand {
                     name: "reason",
                     description: "The reason for approving the suggestion.",
                     type: "STRING"
+                },
+                {
+                    name: "anonymous",
+                    description:
+                        "Whether or not you should be named when giving a reason for this change.",
+                    type: "BOOLEAN"
                 }
             ]
         });
@@ -137,6 +143,7 @@ export default class ApproveSuggestion extends SlashCommand {
                 })
             );
 
+        const anonymous = interaction.options.getBoolean("anonymous");
         let suggestionMessage: BetterMessage;
 
         try {
@@ -193,7 +200,9 @@ export default class ApproveSuggestion extends SlashCommand {
                         fields: [
                             {
                                 name: `Reason from ${
-                                    interaction.user.tag
+                                    anonymous
+                                        ? "Anonymous"
+                                        : interaction.user.tag
                                 } at ${this.client.functions.generateTimestamp({
                                     type: "f"
                                 })}`,
@@ -289,8 +298,11 @@ export default class ApproveSuggestion extends SlashCommand {
                                                     fields: [
                                                         {
                                                             name: `Reason from ${
-                                                                interaction.user
-                                                                    .tag
+                                                                anonymous
+                                                                    ? "Anonymous"
+                                                                    : interaction
+                                                                          .user
+                                                                          .tag
                                                             } at ${this.client.functions.generateTimestamp(
                                                                 { type: "f" }
                                                             )}`,
@@ -383,9 +395,11 @@ export default class ApproveSuggestion extends SlashCommand {
                                                         fields: [
                                                             {
                                                                 name: `Reason from ${
-                                                                    interaction
-                                                                        .user
-                                                                        .tag
+                                                                    anonymous
+                                                                        ? "Anonymous"
+                                                                        : interaction
+                                                                              .user
+                                                                              .tag
                                                                 } at ${this.client.functions.generateTimestamp(
                                                                     {
                                                                         type: "d"
