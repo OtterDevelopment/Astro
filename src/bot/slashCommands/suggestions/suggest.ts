@@ -103,7 +103,7 @@ export default class Suggest extends SlashCommand {
                             : {
                                   name: interaction.user.tag,
                                   iconURL: !dontAttachImages
-                                      ? `userAvatar.${
+                                      ? `attachment://userAvatar.${
                                             interaction.user
                                                 .displayAvatarURL({
                                                     dynamic: true

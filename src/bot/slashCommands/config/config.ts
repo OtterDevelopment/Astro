@@ -69,6 +69,20 @@ export default class Config extends SlashCommand {
                                     required: true
                                 }
                             ]
+                        },
+                        {
+                            name: "clear",
+                            description:
+                                "Clear the permissions for a user or role.",
+                            type: "SUB_COMMAND",
+                            options: [
+                                {
+                                    name: "object",
+                                    description: "The object to clear.",
+                                    type: "MENTIONABLE",
+                                    required: true
+                                }
+                            ]
                         }
                     ]
                 },
@@ -334,7 +348,7 @@ export default class Config extends SlashCommand {
         } else if (
             interaction.options.getSubcommandGroup(false) === "permissions"
         ) {
-            if (interaction.options.getSubcommand() === "allow") {
+            if (interaction.options.getSubcommand() === "allow")
                 return Promise.all([
                     this.client.mongo
                         .db("guilds")
@@ -369,7 +383,41 @@ export default class Config extends SlashCommand {
                         })
                     )
                 ]);
-            }
+            else if (interaction.options.getSubcommand() === "deny")
+                return Promise.all([
+                    this.client.mongo
+                        .db("guilds")
+                        .collection("permissions")
+                        .updateOne(
+                            { guildId: interaction.guild!.id },
+                            {
+                                $pull: {
+                                    [`denied.${
+                                        interaction.options.getMentionable(
+                                            "object"
+                                        ) instanceof Role
+                                            ? "roles"
+                                            : "users"
+                                    }`]: interaction.user.id
+                                }
+                            },
+                            { upsert: true }
+                        ),
+                    interaction.reply(
+                        this.client.functions.generateSuccessMessage({
+                            title: `${
+                                interaction.options.getMentionable(
+                                    "object"
+                                ) instanceof Role
+                                    ? "Role"
+                                    : "User"
+                            } Denied`,
+                            description: `I have denied ${interaction.options
+                                .getMentionable("object")!
+                                .toString()} the permission to change the outcome of suggestions!`
+                        })
+                    )
+                ]);
 
             return Promise.all([
                 this.client.mongo
