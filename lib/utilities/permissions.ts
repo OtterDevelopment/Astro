@@ -28,7 +28,9 @@ export const permissionNames = new Map([
     ["MANAGE_NICKNAMES", "Manage Nicknames"],
     ["MANAGE_ROLES", "Manage Roles"],
     ["MANAGE_WEBHOOKS", "Manage Webhooks"],
-    ["MANAGE_EMOJIS_AND_STICKERS", "Manage Emojis and Stickers"]
+    ["MANAGE_EMOJIS_AND_STICKERS", "Manage Emojis and Stickers"],
+    ["CREATE_PUBLIC_THREADS", "Create Public Threads"],
+    ["CREATE_PRIVATE_THREADS", "Create Private Threads"]
 ]);
 
 export const allPermissions = [
@@ -60,7 +62,9 @@ export const allPermissions = [
     "MANAGE_NICKNAMES",
     "MANAGE_ROLES",
     "MANAGE_WEBHOOKS",
-    "MANAGE_EMOJIS_AND_STICKERS"
+    "MANAGE_EMOJIS_AND_STICKERS",
+    "CREATE_PUBLIC_THREADS",
+    "CREATE_PRIVATE_THREADS"
 ];
 
 export const channelPermissions = [
@@ -86,7 +90,9 @@ export const channelPermissions = [
     "PRIORITY_SPEAKER",
     "MUTE_MEMBERS",
     "DEAFEN_MEMBERS",
-    "MOVE_MEMBERS"
+    "MOVE_MEMBERS",
+    "CREATE_PUBLIC_THREADS",
+    "CREATE_PRIVATE_THREADS"
 ];
 
 export const textPermissions = [
@@ -95,6 +101,8 @@ export const textPermissions = [
     "MANAGE_ROLES",
     "MANAGE_WEBHOOKS",
     "CREATE_INSTANT_INVITE",
+    "CREATE_PUBLIC_THREADS",
+    "CREATE_PRIVATE_THREADS",
     "SEND_MESSAGES",
     "EMBED_LINKS",
     "ATTACH_FILES",
@@ -121,3 +129,4 @@ export const voicePermissions = [
     "DEAFEN_MEMBERS",
     "MOVE_MEMBERS"
 ];
+
