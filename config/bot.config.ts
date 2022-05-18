@@ -23,7 +23,7 @@ export default {
         activities: [
             {
                 type: "LISTENING",
-                name: "to suggestions."
+                name: "suggestions."
             }
         ]
     } as PresenceData,
