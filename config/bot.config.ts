@@ -9,7 +9,7 @@ export default {
     prefixes: process.env.NODE_ENV === "production" ? ["a!"] : ["a!!"],
     botName: "Astro",
 
-    version: "3.0.0",
+    version: "4.0.0",
     admins: ["619284841187246090", "255422791875166208"],
 
     // If your bot isn't public, or open source, or doesn't have a

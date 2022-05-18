@@ -1,6 +1,6 @@
 {
     "name": "astro",
-    "version": "1.0.0",
+    "version": "4.0.0",
     "main": "dist/src/index.js",
     "type": "module",
     "scripts": {
