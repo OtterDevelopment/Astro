@@ -66,6 +66,6 @@ export default {
         baseURL: "https://app.datadoghq.com/api/v1/"
     },
 
-    mediaChannel: "961374122594684958"
+    mediaChannel: "799529648102440970"
 };
 
