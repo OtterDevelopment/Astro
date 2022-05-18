@@ -88,8 +88,10 @@ export default class Eval extends TextCommand {
         let thenable = false;
         let type;
         try {
-            if (message.content.includes("--async"))
+            if (message.content.includes("--async")) {
+                code = code.replaceAll("--async", "");
                 code = `(async () => {\n${code}\n})();`;
+            }
             // eslint-disable-next-line no-eval
             result = eval(code);
             syncTime = stopwatch.toString();
