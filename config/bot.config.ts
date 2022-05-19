@@ -15,7 +15,7 @@ export default {
     // If your bot isn't public, or open source, or doesn't have a
     // Support server, feel free to remove the following variables.
     supportServer: "https://discord.gg/Q27U4pZ",
-    minimalInvite: "",
+    minimalInvite: "https://discord.com/api/oauth2/authorize?client_id=649535694145847301&permissions=347136&scope=bot%20applications.commands",
     gitHub: "https://github.com/OtterDevelopment/Astro",
 
     presence: {
