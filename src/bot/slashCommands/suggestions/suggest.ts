@@ -64,7 +64,8 @@ export default class Suggest extends SlashCommand {
             dontAttachImages,
             autoThread,
             customEmojis,
-            anonymousSuggestionsEnabled
+            anonymousSuggestionsEnabled,
+            suggestionRole
         ] = await Promise.all([
             this.client.mongo
                 .db("suggestions")
@@ -85,6 +86,10 @@ export default class Suggest extends SlashCommand {
             this.client.mongo
                 .db("guilds")
                 .collection("anonymousSuggestionsEnabled")
+                .findOne({ guildId: interaction.guild!.id }),
+            this.client.mongo
+                .db("guilds")
+                .collection("suggestionRoles")
                 .findOne({ guildId: interaction.guild!.id })
         ]);
 
@@ -160,7 +165,8 @@ export default class Suggest extends SlashCommand {
                             ]
                         })
                     ]
-                )
+                ),
+                content: suggestionRole ? `<@&${suggestionRole.roleId}>` : ""
             });
         } catch (error: any) {
             if (error.code === 50013) {

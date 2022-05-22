@@ -211,6 +211,32 @@ export default class Config extends SlashCommand {
                     ]
                 },
                 {
+                    name: "suggestion_role",
+                    description:
+                        "The role to be pinged whenever a suggestion is made.",
+                    type: "SUB_COMMAND_GROUP",
+                    options: [
+                        {
+                            name: "set",
+                            description: "Set the suggestion role.",
+                            type: "SUB_COMMAND",
+                            options: [
+                                {
+                                    name: "role",
+                                    description: "The role to set.",
+                                    type: "ROLE",
+                                    required: true
+                                }
+                            ]
+                        },
+                        {
+                            name: "remove",
+                            description: "Remove the suggestion role.",
+                            type: "SUB_COMMAND"
+                        }
+                    ]
+                },
+                {
                     name: "dm_on_choice",
                     description:
                         "Toggle whether or not users should be DMed when an outcome is made on their suggestion.",
@@ -538,6 +564,46 @@ export default class Config extends SlashCommand {
                         description: `${this.client.functions.titleCase(
                             interaction.options.getString("type")!
                         )} emoji has been removed!`
+                    })
+                )
+            ]);
+        } else if (
+            interaction.options.getSubcommandGroup(false) === "suggestion_role"
+        ) {
+            if (interaction.options.getSubcommand() === "set")
+                return Promise.all([
+                    this.client.mongo
+                        .db("guilds")
+                        .collection("suggestionRoles")
+                        .updateOne(
+                            { guildId: interaction.guild!.id },
+                            {
+                                $set: {
+                                    roleId: interaction.options.getRole("role")!
+                                        .id
+                                }
+                            },
+                            { upsert: true }
+                        ),
+                    interaction.reply(
+                        this.client.functions.generateSuccessMessage({
+                            title: "Suggestion Role Set",
+                            description: `I have set the suggestion role to ${interaction.options
+                                .getRole("role")!
+                                .toString()}!`
+                        })
+                    )
+                ]);
+
+            return Promise.all([
+                this.client.mongo
+                    .db("guilds")
+                    .collection("suggestionRoles")
+                    .deleteOne({ guildId: interaction.guild!.id }),
+                interaction.reply(
+                    this.client.functions.generateSuccessMessage({
+                        title: "Suggestion Role Removed",
+                        description: `I have remove the suggestion role!`
                     })
                 )
             ]);
