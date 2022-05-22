@@ -2,13 +2,16 @@ import EventHandler from "../../../lib/classes/EventHandler.js";
 
 export default class Ready extends EventHandler {
     override async run() {
-        await this.client.application?.fetch();
-        const allGuilds = await this.client.shard?.broadcastEval(async c =>
-            c.guilds.cache.map(
-                guild =>
-                    `${guild.name} [${guild.id}] - ${guild.memberCount} members.`
-            )
-        );
+        const [allGuilds] = await Promise.all([
+            this.client.shard?.broadcastEval(async c =>
+                c.guilds.cache.map(
+                    guild =>
+                        `${guild.name} [${guild.id}] - ${guild.memberCount} members.`
+                )
+            ),
+            this.client.slashCommandHandler.registerSlashCommands(),
+            this.client.application?.fetch()
+        ]);
         const guildsStringList: string[] = [];
         // @ts-ignore
         for (let i = 0; i < allGuilds.length; i++) {
@@ -31,3 +34,4 @@ export default class Ready extends EventHandler {
         this.client.dataDog.gauge("users", stats.users);
     }
 }
+
