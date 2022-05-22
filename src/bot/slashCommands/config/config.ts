@@ -237,6 +237,34 @@ export default class Config extends SlashCommand {
                     ]
                 },
                 {
+                    name: "suggestion_review_channel",
+                    description:
+                        "The channel to review suggestion in. (Having this set requires suggestions to be reviewed).",
+                    type: "SUB_COMMAND_GROUP",
+                    options: [
+                        {
+                            name: "set",
+                            description: "Set the suggestion review channel.",
+                            type: "SUB_COMMAND",
+                            options: [
+                                {
+                                    name: "channel",
+                                    description: "The channel to set.",
+                                    type: "CHANNEL",
+                                    channelTypes: ["GUILD_NEWS", "GUILD_TEXT"],
+                                    required: true
+                                }
+                            ]
+                        },
+                        {
+                            name: "remove",
+                            description:
+                                "Remove the suggestion review channel.",
+                            type: "SUB_COMMAND"
+                        }
+                    ]
+                },
+                {
                     name: "dm_on_choice",
                     description:
                         "Toggle whether or not users should be DMed when an outcome is made on their suggestion.",
@@ -603,7 +631,50 @@ export default class Config extends SlashCommand {
                 interaction.reply(
                     this.client.functions.generateSuccessMessage({
                         title: "Suggestion Role Removed",
-                        description: `I have remove the suggestion role!`
+                        description: `I have removed the suggestion role!`
+                    })
+                )
+            ]);
+        } else if (
+            interaction.options.getSubcommandGroup(false) ===
+            "suggestion_review_channel"
+        ) {
+            if (interaction.options.getSubcommand() === "set")
+                return Promise.all([
+                    this.client.mongo
+                        .db("guilds")
+                        .collection("suggestionReviewChannels")
+                        .updateOne(
+                            { guildId: interaction.guild!.id },
+                            {
+                                $set: {
+                                    channelId:
+                                        interaction.options.getChannel(
+                                            "channel"
+                                        )!.id
+                                }
+                            },
+                            { upsert: true }
+                        ),
+                    interaction.reply(
+                        this.client.functions.generateSuccessMessage({
+                            title: "Suggestion Review Channel Set",
+                            description: `I have set the suggestion review channel to ${interaction.options
+                                .getChannel("channel")!
+                                .toString()}!`
+                        })
+                    )
+                ]);
+
+            return Promise.all([
+                this.client.mongo
+                    .db("guilds")
+                    .collection("suggestionReviewChannels")
+                    .deleteOne({ guildId: interaction.guild!.id }),
+                interaction.reply(
+                    this.client.functions.generateSuccessMessage({
+                        title: "Suggestion Review Channel",
+                        description: `I have removed the suggestion review channel!`
                     })
                 )
             ]);

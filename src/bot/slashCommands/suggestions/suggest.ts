@@ -65,7 +65,8 @@ export default class Suggest extends SlashCommand {
             autoThread,
             customEmojis,
             anonymousSuggestionsEnabled,
-            suggestionRole
+            suggestionRole,
+            suggestionReviewChannelDocument
         ] = await Promise.all([
             this.client.mongo
                 .db("suggestions")
@@ -90,13 +91,23 @@ export default class Suggest extends SlashCommand {
             this.client.mongo
                 .db("guilds")
                 .collection("suggestionRoles")
+                .findOne({ guildId: interaction.guild!.id }),
+            this.client.mongo
+                .db("guilds")
+                .collection("suggestionReviewChannels")
                 .findOne({ guildId: interaction.guild!.id })
         ]);
+
+        const suggestionReviewChannel = interaction.guild!.channels.cache.get(
+            suggestionReviewChannelDocument?.channelId
+        ) as TextChannel | null;
 
         let suggestionMessage: BetterMessage;
 
         try {
-            suggestionMessage = await suggestionChannel.send({
+            suggestionMessage = await (
+                suggestionReviewChannel || suggestionChannel
+            ).send({
                 ...this.client.functions.generatePrimaryMessage(
                     {
                         author: anonymousSuggestionsEnabled
@@ -143,30 +154,54 @@ export default class Suggest extends SlashCommand {
                         description:
                             interaction.options.getString("suggestion")!
                     },
-                    [
-                        new MessageActionRow({
-                            components: [
-                                new MessageButton({
-                                    label: "0",
-                                    emoji: customEmojis?.upvote || "👍",
-                                    style: "SUCCESS",
-                                    customId: `voteSuggestion-${
-                                        interaction.guild!.id
-                                    }-${suggestionNumber + 1}-up`
-                                }),
-                                new MessageButton({
-                                    label: "0",
-                                    emoji: customEmojis?.downvote || "👎",
-                                    style: "DANGER",
-                                    customId: `voteSuggestion-${
-                                        interaction.guild!.id
-                                    }-${suggestionNumber + 1}-down`
-                                })
-                            ]
-                        })
-                    ]
+                    suggestionReviewChannel
+                        ? [
+                              new MessageActionRow({
+                                  components: [
+                                      new MessageButton({
+                                          label: "Approve",
+                                          style: "SUCCESS",
+                                          customId: `reviewSuggestion-${
+                                              interaction.guild!.id
+                                          }-${suggestionNumber + 1}-approve`
+                                      }),
+                                      new MessageButton({
+                                          label: "Deny",
+                                          style: "DANGER",
+                                          customId: `reviewSuggestion-${
+                                              interaction.guild!.id
+                                          }-${suggestionNumber + 1}-deny`
+                                      })
+                                  ]
+                              })
+                          ]
+                        : [
+                              new MessageActionRow({
+                                  components: [
+                                      new MessageButton({
+                                          label: "0",
+                                          emoji: customEmojis?.upvote || "👍",
+                                          style: "SUCCESS",
+                                          customId: `voteSuggestion-${
+                                              interaction.guild!.id
+                                          }-${suggestionNumber + 1}-up`
+                                      }),
+                                      new MessageButton({
+                                          label: "0",
+                                          emoji: customEmojis?.downvote || "👎",
+                                          style: "DANGER",
+                                          customId: `voteSuggestion-${
+                                              interaction.guild!.id
+                                          }-${suggestionNumber + 1}-down`
+                                      })
+                                  ]
+                              })
+                          ]
                 ),
-                content: suggestionRole ? `<@&${suggestionRole.roleId}>` : ""
+                content:
+                    suggestionRole && !suggestionReviewChannel
+                        ? `<@&${suggestionRole.roleId}>`
+                        : null
             });
         } catch (error: any) {
             if (error.code === 50013) {
