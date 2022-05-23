@@ -20,67 +20,47 @@ export default class DisableDMs extends Button {
             interaction.message?.id || ""
         )) as BetterMessage;
 
-        if (exists)
-            return Promise.all([
-                this.client.mongo
-                    .db("users")
-                    .collection("dmsDisabled")
-                    .deleteOne({ userId: interaction.user.id }),
-                message.edit({
-                    components: [
-                        new MessageActionRow({
-                            components: [
-                                new MessageButton({
-                                    label: "Disable DMs",
-                                    customId: "toggleDMs",
-                                    style: "DANGER"
-                                })
-                            ]
-                        })
-                    ]
-                }),
-                interaction.reply(
-                    this.client.functions.generateSuccessMessage(
-                        {
-                            title: "DMs Enabled",
-                            description:
-                                "You will now receive DMs when the outcome of a decision is changed!"
-                        },
-                        [],
-                        true
-                    )
-                )
-            ]);
-
-        return Promise.all([
-            this.client.mongo
-                .db("users")
-                .collection("dmsDisabled")
-                .insertOne({ userId: interaction.user.id }),
-            message.edit({
-                components: [
-                    new MessageActionRow({
+        return Promise.all(
+            (
+                [
+                    message.edit({
                         components: [
-                            new MessageButton({
-                                label: "Enable DMs",
-                                customId: "toggleDMs",
-                                style: "SUCCESS"
+                            new MessageActionRow({
+                                components: [
+                                    new MessageButton({
+                                        label: exists
+                                            ? "Disable DMs"
+                                            : "Enable DMs",
+                                        customId: "toggleDMs",
+                                        style: "DANGER"
+                                    })
+                                ]
                             })
                         ]
-                    })
-                ]
-            }),
-            interaction.reply(
-                this.client.functions.generateSuccessMessage(
-                    {
-                        title: "DMs Disabled",
-                        description:
-                            "You will no longer receive DMs when the outcome of a decision is changed!"
-                    },
-                    [],
-                    true
-                )
+                    }),
+                    interaction.reply(
+                        this.client.functions.generateSuccessMessage(
+                            {
+                                title: exists ? "DMs Enabled" : "DMs Disabled",
+                                description: `You will ${
+                                    exists ? "now" : "no longer"
+                                } receive DMs when the outcome of a suggestion is changed!`
+                            },
+                            [],
+                            true
+                        )
+                    )
+                ] as Array<Promise<any>>
+            ).concat(
+                exists
+                    ? [
+                          this.client.mongo
+                              .db("users")
+                              .collection("dmsDisabled")
+                              .deleteOne({ userId: interaction.user.id })
+                      ]
+                    : []
             )
-        ]);
+        );
     }
 }
