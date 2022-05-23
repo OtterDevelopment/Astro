@@ -256,9 +256,13 @@ export default class Suggest extends SlashCommand {
                 this.client.functions.generateSuccessMessage(
                     {
                         title: "Suggestion Sent",
-                        description: `Your suggestion has been sent to the suggestion channel, you can view it [here](${
-                            suggestionMessage!.url
-                        }).`
+                        description:
+                            suggestionMessage.channelId ===
+                            suggestionReviewChannelDocument?.channelId
+                                ? "Your suggestion has been submitted for reviewal. You will be notified when it has been reviewed if you haven't disabled DMs."
+                                : `Your suggestion has been sent to the suggestion channel, you can view it [here](${
+                                      suggestionMessage!.url
+                                  }).`
                     },
                     [],
                     true

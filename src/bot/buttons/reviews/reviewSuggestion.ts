@@ -2,6 +2,7 @@ import {
     ButtonInteraction,
     MessageActionRow,
     MessageButton,
+    MessageEmbedOptions,
     TextChannel
 } from "discord.js";
 import Button from "../../../../lib/classes/Button.js";
@@ -18,12 +19,18 @@ export default class ReviewSuggestion extends Button {
             .split("-")
             .splice(1);
 
-        const suggestion = await this.client.mongo
-            .db("suggestions")
-            .collection(guildId)
-            .findOne({
-                suggestionNumber: parseInt(suggestionNumber, 10)
-            });
+        const [suggestion, autoThread] = await Promise.all([
+            this.client.mongo
+                .db("suggestions")
+                .collection(guildId)
+                .findOne({
+                    suggestionNumber: parseInt(suggestionNumber, 10)
+                }),
+            this.client.mongo
+                .db("guilds")
+                .collection("autoThreadEnabled")
+                .findOne({ guildId: interaction.guild!.id })
+        ]);
 
         if (!suggestion)
             return interaction.reply(
@@ -36,7 +43,29 @@ export default class ReviewSuggestion extends Button {
                 )
             );
 
-        await (interaction.message as BetterMessage).delete();
+        // eslint-disable-next-line prefer-object-spread
+        const reviewEmbed = Object.assign({}, interaction.message!.embeds[0]!);
+
+        reviewEmbed.footer = {
+            text: `Review ${type === "approve" ? "approved" : "denied"} by ${
+                interaction.user.tag
+            }`,
+            icon_url: interaction.user.displayAvatarURL()
+        };
+        reviewEmbed.timestamp = Date.now();
+        reviewEmbed.color = parseInt(
+            type === "approve"
+                ? this.client.config.colors.success
+                : this.client.config.colors.error,
+            16
+        );
+
+        await (interaction.message as BetterMessage).edit({
+            embeds: [reviewEmbed],
+            components: []
+        });
+
+        let suggestionMessage: BetterMessage | null = null;
 
         if (type === "approve") {
             const suggestionChannelDocument = await this.client.mongo
@@ -77,7 +106,7 @@ export default class ReviewSuggestion extends Button {
                 .collection("customEmojis")
                 .findOne({ guildId: interaction.guild!.id });
 
-            const message = await suggestionChannel.send({
+            suggestionMessage = await suggestionChannel.send({
                 embeds: interaction.message!.embeds,
                 content: interaction.message!.content.length
                     ? interaction.message!.content
@@ -109,38 +138,137 @@ export default class ReviewSuggestion extends Button {
                     })
                 ]
             });
-
-            return Promise.all([
-                this.client.mongo
-                    .db("suggestions")
-                    .collection(guildId)
-                    .updateOne(
-                        {
-                            suggestionNumber: parseInt(suggestionNumber, 10)
-                        },
-                        { $set: { messageId: message.id } }
-                    ),
-                interaction.reply(
-                    this.client.functions.generateSuccessMessage(
-                        {
-                            title: `Suggestion Approved`,
-                            description: `Suggestion #${suggestionNumber} has been approved, find it [here](${message.url})!`
-                        },
-                        [],
-                        true
-                    )
-                )
-            ]);
         }
 
-        return interaction.reply(
-            this.client.functions.generateSuccessMessage(
-                {
-                    title: `Suggestion Denied`,
-                    description: `Suggestion #${suggestionNumber} has been denied!`
-                },
-                [],
-                true
+        let payload: MessageEmbedOptions = {
+            title: `Suggestion ${type === "approve" ? "Approved" : "Denied"}`,
+            description: `Suggestion #${suggestionNumber} has been ${
+                type === "approve" ? "approved" : "denied"
+            }${
+                type === "approve"
+                    ? `, find it [here](${suggestionMessage!.url})`
+                    : ""
+            }!`
+        };
+
+        return Promise.all(
+            (
+                [
+                    interaction.reply(
+                        type === "approve"
+                            ? this.client.functions.generateSuccessMessage(
+                                  payload,
+                                  [],
+                                  true
+                              )
+                            : this.client.functions.generateErrorMessage(
+                                  payload
+                              )
+                    ),
+                    this.client.mongo
+                        .db("guilds")
+                        .collection("dmOnChoiceTurnedOff")
+                        .findOne({ guildId: interaction.guild!.id })
+                        .then(entry => {
+                            if (entry) return;
+
+                            this.client.mongo
+                                .db("users")
+                                .collection("dmsDisabled")
+                                .findOne({ userId: suggestion.suggesterId })
+                                .then(dmsDisabled => {
+                                    if (dmsDisabled) return;
+
+                                    payload = {
+                                        title: `Suggestion ${
+                                            type === "approve"
+                                                ? "Approved"
+                                                : "Denied"
+                                        }`,
+                                        description: `Suggestion #${suggestionNumber}, which you created, has been ${
+                                            type === "approve"
+                                                ? "approved"
+                                                : "denied"
+                                        }${
+                                            type === "approve"
+                                                ? `, find it [here](${
+                                                      suggestionMessage!.url
+                                                  })`
+                                                : ""
+                                        }!`
+                                    };
+
+                                    this.client.users
+                                        .fetch(suggestion.suggesterId)
+                                        .then(user =>
+                                            user
+                                                .send(
+                                                    type === "approve"
+                                                        ? this.client.functions.generateSuccessMessage(
+                                                              payload,
+                                                              [],
+                                                              true
+                                                          )
+                                                        : this.client.functions.generateErrorMessage(
+                                                              payload
+                                                          )
+                                                )
+                                                .catch(error => {
+                                                    if (error.code === 50007)
+                                                        return this.client.logger.info(
+                                                            `I tried to DM ${
+                                                                user.tag
+                                                            } [${
+                                                                user.id
+                                                            }] because their suggestion has been reviewed (${
+                                                                suggestion.suggestionNumber
+                                                            }) in ${
+                                                                interaction.guild!
+                                                                    .name
+                                                            } [${
+                                                                interaction.guild!
+                                                                    .id
+                                                            }] but they're DMs are closed!`
+                                                        );
+
+                                                    this.client.logger.error(
+                                                        error
+                                                    );
+                                                    this.client.logger.sentry.captureWithInteraction(
+                                                        error,
+                                                        interaction
+                                                    );
+                                                })
+                                        );
+                                });
+                        })
+                ] as Array<Promise<any>>
+            ).concat(
+                type === "approve"
+                    ? [
+                          this.client.mongo
+                              .db("suggestions")
+                              .collection(guildId)
+                              .updateOne(
+                                  {
+                                      suggestionNumber: parseInt(
+                                          suggestionNumber,
+                                          10
+                                      )
+                                  },
+                                  { $set: { messageId: suggestionMessage!.id } }
+                              ),
+                          new Promise(() => {
+                              if (autoThread)
+                                  suggestionMessage!.startThread({
+                                      name: `Suggestion ${
+                                          suggestionNumber + 1
+                                      }`,
+                                      reason: "Automatic threads on suggestions are enabled within this server, turn this off by running /config auto_thread!"
+                                  });
+                          })
+                      ]
+                    : []
             )
         );
     }
