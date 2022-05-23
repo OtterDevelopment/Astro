@@ -1,5 +1,4 @@
 import {
-    CacheType,
     CommandInteraction,
     GuildMember,
     MessageActionRow,
@@ -40,7 +39,7 @@ export default class DenySuggestion extends SlashCommand {
     }
 
     public override async preCheck(
-        interaction: CommandInteraction<CacheType>
+        interaction: CommandInteraction
     ): Promise<[boolean, (MessageEmbedOptions | undefined)?]> {
         const permissionDocument = await this.client.mongo
             .db("guilds")
