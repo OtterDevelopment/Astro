@@ -44,6 +44,7 @@ export default class InteractionCreate extends EventHandler {
             return this.client.autoCompleteHandler.handleAutoComplete(
                 interaction
             );
+        else if (interaction.isModalSubmit()) return;
         const error = new Error("Invalid Interaction: Never seen this before.");
         this.client.logger.error(error);
         this.client.logger.sentry.captureWithInteraction(error, interaction);
