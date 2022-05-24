@@ -342,7 +342,7 @@ export default class DenySuggestion extends SlashCommand {
                                                         interaction.guild!.name
                                                     } [${
                                                         interaction.guild!.id
-                                                    }] has changed but they're DMs are closed!`
+                                                    }] has changed but their DMs are closed!`
                                                 );
 
                                             this.client.logger.error(error);
@@ -446,7 +446,7 @@ export default class DenySuggestion extends SlashCommand {
                                                         } [${
                                                             interaction.guild!
                                                                 .id
-                                                        }] has changed but they're DMs are closed!`
+                                                        }] has changed but their DMs are closed!`
                                                     );
 
                                                 this.client.logger.error(error);
