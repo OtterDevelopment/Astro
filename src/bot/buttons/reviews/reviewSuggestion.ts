@@ -103,24 +103,6 @@ export default class ReviewSuggestion extends Button {
                 )
             );
 
-        await interaction.showModal(
-            new Modal({
-                title: "Review Suggestion",
-                customId: `reviewSuggestion-${suggestionNumber}`,
-                components: [
-                    new MessageActionRow({
-                        components: [
-                            new TextInputComponent({
-                                customId: "input",
-                                label: "Reason",
-                                style: "PARAGRAPH"
-                            })
-                        ]
-                    })
-                ]
-            })
-        );
-
         let reason: string | null;
         let modalInteraction: ModalSubmitInteraction;
 
@@ -148,18 +130,19 @@ export default class ReviewSuggestion extends Button {
                 interaction.message!.embeds[0]!
             );
 
-            reviewEmbed.fields = [
-                ...(reviewEmbed.fields || []),
-                {
-                    name: `Reason from ${
-                        interaction.user.tag
-                    } at ${this.client.functions.generateTimestamp({
-                        type: "f"
-                    })}`,
-                    inline: false,
-                    value: reason || "No reason provided."
-                }
-            ];
+            if (reason)
+                reviewEmbed.fields = [
+                    ...(reviewEmbed.fields || []),
+                    {
+                        name: `Reason from ${
+                            interaction.user.tag
+                        } at ${this.client.functions.generateTimestamp({
+                            type: "f"
+                        })}`,
+                        inline: false,
+                        value: reason || "No reason provided."
+                    }
+                ];
             reviewEmbed.footer = {
                 text: `Review ${
                     type === "approve" ? "approved" : "denied"
@@ -174,10 +157,16 @@ export default class ReviewSuggestion extends Button {
                 16
             );
 
-            await modalInteraction.update({
-                embeds: [reviewEmbed],
-                components: []
-            });
+            if (modalInteraction)
+                await modalInteraction.update({
+                    embeds: [reviewEmbed],
+                    components: []
+                });
+            else
+                await (interaction.message as BetterMessage).edit({
+                    embeds: [reviewEmbed],
+                    components: []
+                });
 
             let suggestionMessage: BetterMessage | null = null;
 
@@ -258,33 +247,37 @@ export default class ReviewSuggestion extends Button {
                 });
             }
 
+            let payload: MessageEmbedOptions = {
+                title: `Suggestion ${
+                    type === "approve" ? "Approved" : "Denied"
+                }`,
+                description: `Suggestion #${suggestionNumber} has been ${
+                    type === "approve" ? "approved" : "denied"
+                }${
+                    type === "approve"
+                        ? `, find it [here](${suggestionMessage!.url})`
+                        : ""
+                }!`
+            };
+
             return Promise.all(
                 (
                     [
-                        interaction.followUp(
-                            this.client.functions.generateSuccessMessage(
-                                {
-                                    title: `Suggestion ${
-                                        type === "approve"
-                                            ? "Approved"
-                                            : "Denied"
-                                    }`,
-                                    description: `Suggestion #${suggestionNumber} has been ${
-                                        type === "approve"
-                                            ? "approved"
-                                            : "denied"
-                                    }${
-                                        type === "approve"
-                                            ? `, find it [here](${
-                                                  suggestionMessage!.url
-                                              })`
-                                            : ""
-                                    }!`
-                                },
-                                [],
-                                true
-                            )
-                        ),
+                        modalInteraction
+                            ? interaction.followUp(
+                                  this.client.functions.generateSuccessMessage(
+                                      payload,
+                                      [],
+                                      true
+                                  )
+                              )
+                            : interaction.reply(
+                                  this.client.functions.generateSuccessMessage(
+                                      payload,
+                                      [],
+                                      true
+                                  )
+                              ),
                         this.client.mongo
                             .db("guilds")
                             .collection("dmOnChoiceTurnedOff")
@@ -299,7 +292,7 @@ export default class ReviewSuggestion extends Button {
                                     .then(dmsDisabled => {
                                         if (dmsDisabled) return;
 
-                                        const payload: MessageEmbedOptions = {
+                                        payload = {
                                             title: `Suggestion ${
                                                 type === "approve"
                                                     ? "Approved"
@@ -361,7 +354,7 @@ export default class ReviewSuggestion extends Button {
                                                                 } [${
                                                                     interaction.guild!
                                                                         .id
-                                                                }] but they're DMs are closed!`
+                                                                }] but their DMs are closed!`
                                                             );
 
                                                         this.client.logger.error(
@@ -409,5 +402,27 @@ export default class ReviewSuggestion extends Button {
                 )
             );
         });
+
+        if (type !== "approve")
+            await interaction.showModal(
+                new Modal({
+                    title: "Review Suggestion",
+                    customId: `reviewSuggestion-${suggestionNumber}`,
+                    components: [
+                        new MessageActionRow({
+                            components: [
+                                new TextInputComponent({
+                                    customId: "input",
+                                    label: "Reason",
+                                    style: "PARAGRAPH"
+                                })
+                            ]
+                        })
+                    ]
+                })
+            );
+        else {
+            interactionCollector.stop();
+        }
     }
 }
