@@ -111,7 +111,7 @@ export default class Config extends SlashCommand {
                                 },
                                 {
                                     name: "type",
-                                    description: "The type of choices to log.",
+                                    description: "The type of decision to log.",
                                     type: "STRING",
                                     choices: [
                                         { name: "All", value: "all" },
@@ -137,7 +137,78 @@ export default class Config extends SlashCommand {
                             options: [
                                 {
                                     name: "type",
-                                    description: "The type of choices to log.",
+                                    description:
+                                        "The type of decisions to remove.",
+                                    type: "STRING",
+                                    choices: [
+                                        { name: "All", value: "all" },
+                                        { name: "Accepted", value: "accepted" },
+                                        { name: "Denied", value: "denied" },
+                                        {
+                                            name: "Considered",
+                                            value: "considered"
+                                        },
+                                        {
+                                            name: "Implemented",
+                                            value: "implemented"
+                                        }
+                                    ],
+                                    required: true
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    name: "suggestion_decision_channel",
+                    description:
+                        "Set or remove the public suggestion decision channel for the guild.",
+                    type: "SUB_COMMAND_GROUP",
+                    options: [
+                        {
+                            name: "set",
+                            description: "Set the suggestion decision channel.",
+                            type: "SUB_COMMAND",
+                            options: [
+                                {
+                                    name: "channel",
+                                    description: "The channel to set.",
+                                    type: "CHANNEL",
+                                    channelTypes: ["GUILD_NEWS", "GUILD_TEXT"],
+                                    required: true
+                                },
+                                {
+                                    name: "type",
+                                    description:
+                                        "The type of decisions to log.",
+                                    type: "STRING",
+                                    choices: [
+                                        { name: "All", value: "all" },
+                                        { name: "Approved", value: "approved" },
+                                        { name: "Denied", value: "denied" },
+                                        {
+                                            name: "Considered",
+                                            value: "considered"
+                                        },
+                                        {
+                                            name: "Implemented",
+                                            value: "implemented"
+                                        }
+                                    ],
+                                    required: true
+                                }
+                            ]
+                        },
+                        {
+                            name: "remove",
+                            description:
+                                "Remove the suggestion decision channel.",
+                            type: "SUB_COMMAND",
+                            options: [
+                                {
+                                    name: "type",
+                                    description:
+                                        "The type of decisions to log.",
                                     type: "STRING",
                                     choices: [
                                         { name: "All", value: "all" },
@@ -293,6 +364,12 @@ export default class Config extends SlashCommand {
                     description:
                         "Toggle whether or not images should be attached to suggestions to allow images to be viewed longer.",
                     type: "SUB_COMMAND"
+                },
+                {
+                    name: "delete_on_decision",
+                    description:
+                        "Toggle to delete the suggestion message on decisions, making it unavailable for further decisions.",
+                    type: "SUB_COMMAND"
                 }
             ]
         });
@@ -402,6 +479,67 @@ export default class Config extends SlashCommand {
                     this.client.functions.generateSuccessMessage({
                         title: "Suggestion Log Channel Removed",
                         description: `I have removed the suggestion log channel for ${interaction.options.getString(
+                            "type"
+                        )} suggestions!`
+                    })
+                )
+            ]);
+        } else if (
+            interaction.options.getSubcommandGroup(false) ===
+            "suggestion_decision_channel"
+        ) {
+            if (interaction.options.getSubcommand() === "set") {
+                return Promise.all([
+                    this.client.mongo
+                        .db("guilds")
+                        .collection("suggestionDecisionChannels")
+                        .updateOne(
+                            { guildId: interaction.guild!.id },
+                            {
+                                $set: {
+                                    [`type.${interaction.options.getString(
+                                        "type"
+                                    )}`]:
+                                        interaction.options.getChannel(
+                                            "channel"
+                                        )!.id
+                                }
+                            },
+                            { upsert: true }
+                        ),
+                    interaction.reply(
+                        this.client.functions.generateSuccessMessage({
+                            title: "Suggestion Decision Channel Set",
+                            description: `I have set the suggestion decision channel for ${interaction.options.getString(
+                                "type"
+                            )} suggestions to ${interaction.options
+                                .getChannel("channel")!
+                                .toString()}!`
+                        })
+                    )
+                ]);
+            }
+
+            return Promise.all([
+                this.client.mongo
+                    .db("guilds")
+                    .collection("suggestionDecisionChannels")
+                    .updateOne(
+                        { guildId: interaction.guild!.id },
+                        {
+                            $unset: {
+                                [`type.${interaction.options.getString(
+                                    "type"
+                                )}`]:
+                                    interaction.options.getChannel("channel")!
+                                        .id
+                            }
+                        }
+                    ),
+                interaction.reply(
+                    this.client.functions.generateSuccessMessage({
+                        title: "Suggestion Log Decision Removed",
+                        description: `I have removed the suggestion log decision for ${interaction.options.getString(
                             "type"
                         )} suggestions!`
                     })
@@ -802,7 +940,7 @@ export default class Config extends SlashCommand {
                     })
                 )
             ]);
-        } else if (interaction.options.getSubcommand() === "") {
+        } else if (interaction.options.getSubcommand() === "attach_images") {
             return Promise.all([
                 this.client.mongo
                     .db("guilds")
@@ -825,6 +963,34 @@ export default class Config extends SlashCommand {
                         title: "Attaching Images Toggled",
                         description:
                             "I have toggled attaching images when a suggestion is created!"
+                    })
+                )
+            ]);
+        } else if (
+            interaction.options.getSubcommand() === "delete_on_decision"
+        ) {
+            return Promise.all([
+                this.client.mongo
+                    .db("guilds")
+                    .collection("deleteOnDecision")
+                    .findOne({ guildId: interaction.guild!.id })
+                    .then((entry): any => {
+                        if (!entry)
+                            return this.client.mongo
+                                .db("guilds")
+                                .collection("deleteOnDecision")
+                                .insertOne({ guildId: interaction.guild!.id });
+
+                        return this.client.mongo
+                            .db("guilds")
+                            .collection("deleteOnDecision")
+                            .deleteOne({ guildId: interaction.guild!.id });
+                    }),
+                interaction.reply(
+                    this.client.functions.generateSuccessMessage({
+                        title: "Deleting On Decision Toggled",
+                        description:
+                            "I have toggled deleting the suggestion message when a decision has been made!"
                     })
                 )
             ]);

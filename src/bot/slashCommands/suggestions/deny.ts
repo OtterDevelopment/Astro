@@ -189,32 +189,94 @@ export default class DenySuggestion extends SlashCommand {
             }
         }
 
-        try {
-            await suggestionMessage.edit(
-                this.client.functions.generateErrorMessage(
-                    {
-                        author: suggestionMessage.embeds[0].author!,
-                        title: `Suggestion #${suggestion.suggestionNumber} Denied`,
-                        description: suggestionMessage.embeds[0].description!,
-                        fields: [
-                            {
-                                name: `Reason from ${
-                                    anonymous
-                                        ? "Anonymous"
-                                        : interaction.user.tag
-                                } at ${this.client.functions.generateTimestamp({
-                                    type: "f"
-                                })}`,
-                                value:
-                                    interaction.options.getString("reason") ||
-                                    "No reason provided."
-                            }
-                        ]
-                    },
-                    false,
-                    suggestionMessage.components
+        const [suggestionDecisionChannelsDocument, deleteOnDecision] =
+            await Promise.all([
+                this.client.mongo
+                    .db("guilds")
+                    .collection("suggestionDecisionChannels")
+                    .findOne({ guildId: interaction.guild!.id }),
+                this.client.mongo
+                    .db("guilds")
+                    .collection("deleteOnDecision")
+                    .findOne({ guildId: interaction.guild!.id })
+            ]);
+
+        let suggestionDecisionChannels: TextChannel[] = [];
+
+        if (suggestionDecisionChannelsDocument)
+            suggestionDecisionChannels = [
+                this.client.channels.cache.get(
+                    suggestionDecisionChannelsDocument.type.all || ""
+                ),
+                this.client.channels.cache.get(
+                    suggestionDecisionChannelsDocument.type.approved || ""
                 )
-            );
+            ].filter(Boolean) as Array<TextChannel>;
+
+        try {
+            if (deleteOnDecision && suggestionDecisionChannels.length) {
+                await Promise.all(
+                    [suggestionMessage.delete()].concat(
+                        suggestionDecisionChannels.map(channel =>
+                            (channel as TextChannel).send(
+                                this.client.functions.generateErrorMessage({
+                                    author: suggestionMessage.embeds[0].author!,
+                                    title: `Suggestion #${suggestion.suggestionNumber} Denied`,
+                                    description:
+                                        suggestionMessage.embeds[0]
+                                            .description!,
+                                    fields: [
+                                        {
+                                            name: `Reason from ${
+                                                anonymous
+                                                    ? "Anonymous"
+                                                    : interaction.user.tag
+                                            } at ${this.client.functions.generateTimestamp(
+                                                {
+                                                    type: "f"
+                                                }
+                                            )}`,
+                                            value:
+                                                interaction.options.getString(
+                                                    "reason"
+                                                ) || "No reason provided."
+                                        }
+                                    ]
+                                })
+                            )
+                        )
+                    )
+                );
+            } else
+                await suggestionMessage.edit(
+                    this.client.functions.generateErrorMessage(
+                        {
+                            author: suggestionMessage.embeds[0].author!,
+                            title: `Suggestion #${suggestion.suggestionNumber} Denied`,
+                            description:
+                                suggestionMessage.embeds[0].description!,
+                            fields: [
+                                {
+                                    name: `Reason from ${
+                                        anonymous
+                                            ? "Anonymous"
+                                            : interaction.user.tag
+                                    } at ${this.client.functions.generateTimestamp(
+                                        {
+                                            type: "f"
+                                        }
+                                    )}`,
+                                    value:
+                                        interaction.options.getString(
+                                            "reason"
+                                        ) || "No reason provided."
+                                }
+                            ]
+                        },
+                        false,
+                        suggestionMessage.components
+                    )
+                );
         } catch (error: any) {
             if (error.code === 10008)
                 return this.client.logger.info(
@@ -502,7 +564,37 @@ export default class DenySuggestion extends SlashCommand {
                             )
                         )
                     ]);
-                })
+                }),
+            new Promise(() => {
+                if (!deleteOnDecision)
+                    suggestionDecisionChannels.map(channel =>
+                        (channel as TextChannel).send(
+                            this.client.functions.generateErrorMessage({
+                                author: suggestionMessage.embeds[0].author!,
+                                title: `Suggestion #${suggestion.suggestionNumber} Denied`,
+                                description:
+                                    suggestionMessage.embeds[0].description!,
+                                fields: [
+                                    {
+                                        name: `Reason from ${
+                                            anonymous
+                                                ? "Anonymous"
+                                                : interaction.user.tag
+                                        } at ${this.client.functions.generateTimestamp(
+                                            {
+                                                type: "f"
+                                            }
+                                        )}`,
+                                        value:
+                                            interaction.options.getString(
+                                                "reason"
+                                            ) || "No reason provided."
+                                    }
+                                ]
+                            })
+                        )
+                    );
+            })
         ]);
     }
 }
