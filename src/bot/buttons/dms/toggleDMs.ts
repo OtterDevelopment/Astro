@@ -44,7 +44,7 @@ export default class DisableDMs extends Button {
                                 title: exists ? "DMs Enabled" : "DMs Disabled",
                                 description: `You will ${
                                     exists ? "now" : "no longer"
-                                } receive DMs when the outcome of a suggestion is changed!`
+                                } receive DMs when a decision is made about a suggestion is changed!`
                             },
                             [],
                             true

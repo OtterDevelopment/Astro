@@ -267,7 +267,7 @@ export default class Config extends SlashCommand {
                 {
                     name: "dm_on_choice",
                     description:
-                        "Toggle whether or not users should be DMed when an outcome is made on their suggestion.",
+                        "Toggle whether or not users should be DMed when a decision is made on their suggestion.",
                     type: "SUB_COMMAND"
                 },
                 {
@@ -441,7 +441,7 @@ export default class Config extends SlashCommand {
                             } Allowed`,
                             description: `I have allowed ${interaction.options
                                 .getMentionable("object")!
-                                .toString()} the permission to change the outcome of suggestions!`
+                                .toString()} the permission to make decisions on suggestions!`
                         })
                     )
                 ]);
@@ -476,7 +476,7 @@ export default class Config extends SlashCommand {
                             } Denied`,
                             description: `I have denied ${interaction.options
                                 .getMentionable("object")!
-                                .toString()} the permission to change the outcome of suggestions!`
+                                .toString()} the permission to make decisions on suggestions!`
                         })
                     )
                 ]);

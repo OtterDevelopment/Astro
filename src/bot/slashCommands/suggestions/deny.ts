@@ -55,7 +55,7 @@ export default class DenySuggestion extends SlashCommand {
                 {
                     title: "Missing Permissions",
                     description:
-                        "You don't have enough permissions to change the outcome of this suggestion!"
+                        "You don't have enough permissions to make a decision about this suggestion"
                 }
             ];
         else if (interaction.memberPermissions?.has("MANAGE_GUILD"))
@@ -88,7 +88,7 @@ export default class DenySuggestion extends SlashCommand {
             {
                 title: "Missing Permissions",
                 description:
-                    "You don't have enough permissions to change the outcome of this suggestion!"
+                    "You don't have enough permissions to make a decision about this suggestion"
             }
         ];
     }
@@ -336,7 +336,7 @@ export default class DenySuggestion extends SlashCommand {
                                                         user.tag
                                                     } [${
                                                         user.id
-                                                    }] because the outcome of their suggestion (${
+                                                    }] because a decision has been made on their suggestion (${
                                                         suggestion.suggestionNumber
                                                     }) in ${
                                                         interaction.guild!.name
@@ -438,7 +438,7 @@ export default class DenySuggestion extends SlashCommand {
                                                             user.tag
                                                         } [${
                                                             user.id
-                                                        }] because the outcome of the suggestion (${
+                                                        }] because a desicion has been made on the suggestion (${
                                                             suggestion.suggestionNumber
                                                         }) they voted on in ${
                                                             interaction.guild!
