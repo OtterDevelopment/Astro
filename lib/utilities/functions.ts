@@ -1,5 +1,4 @@
 import { createHash } from "crypto";
-import * as petitio from "petitio";
 import {
     MessageActionRow,
     MessageAttachment,
@@ -12,7 +11,6 @@ import {
     User
 } from "discord.js";
 import { existsSync, mkdirSync, readdirSync } from "fs";
-import { PetitioRequest } from "petitio/dist/lib/PetitioRequest";
 import { permissionNames } from "./permissions.js";
 import BetterClient from "../extensions/BetterClient.js";
 import { GeneratedMessage, GenerateTimestampOptions } from "../../typings";
@@ -169,23 +167,20 @@ export default class Functions {
         type?: string
     ): Promise<string | null> {
         try {
-            const haste = await (
-                (await petitio
-                    // @ts-ignore
-                    .default(
-                        `${this.client.config.hastebin}/documents`,
-                        "POST"
-                    )) as PetitioRequest
-            )
-                .body(content)
-                .header(
-                    "User-Agent",
-                    `${this.client.config.botName}/${this.client.config.version}`
-                )
-                .send();
-            if (haste.text() === "error code: 1020")
-                return `Cloudflare Error 1020 - Ray ${haste.headers["cf-ray"]}`;
-            return `${this.client.config.hastebin}/${haste.json().key}${
+            const response = await fetch(
+                `${this.client.config.hastebin}/documents`,
+                {
+                    method: "POST",
+                    body: content,
+                    headers: {
+                        "User-Agent": `${this.client.config.botName}/${this.client.config.version}`
+                    }
+                }
+            );
+
+            const haste = await response.json();
+
+            return `${this.client.config.hastebin}/${haste.key}${
                 type ? `.${type}` : ".md"
             }`;
         } catch (error) {
